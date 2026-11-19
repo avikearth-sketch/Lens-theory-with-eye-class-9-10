@@ -1,0 +1,229 @@
+from pathlib import Path
+
+html = r'''<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focus Lab — Myopia & Corrective Lenses</title>
+<style>
+:root{color-scheme:dark;--bg:#09111f;--panel:#111d30;--panel2:#17263d;--line:#2a3c57;--text:#eef5ff;--muted:#9eb0c9;--cyan:#55d8ee;--yellow:#ffd166;--pink:#ff7eaa;--green:#64e3a1}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#1c3554 0,transparent 55%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:1120px;margin:auto;padding:28px 18px 48px}.hero{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:20px}.eyebrow{color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.hero h1{font-size:clamp(28px,5vw,44px);line-height:1.05;margin:8px 0}.hero p{color:var(--muted);margin:8px 0 0;max-width:620px}.tag{border:1px solid var(--line);padding:7px 11px;border-radius:999px;color:var(--muted);white-space:nowrap;font-size:12px}
+.layout{display:grid;grid-template-columns:340px 1fr;gap:16px}.panel{background:linear-gradient(145deg,var(--panel),#0e192a);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 12px 32px #0003}.panel h2{font-size:16px;margin:0 0 14px}.control{margin:17px 0}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.value{font-variant-numeric:tabular-nums;color:var(--cyan);font-weight:750}.muted{color:var(--muted);font-size:12px}.seg{display:flex;gap:7px;background:#091321;padding:5px;border-radius:12px}.seg button,.action{flex:1;border:1px solid transparent;background:transparent;color:var(--muted);padding:9px 10px;border-radius:9px;font-weight:700;cursor:pointer}.seg button.active{background:#263d5b;color:white;border-color:#3d5d80}.action{background:#203752;color:var(--text);border:1px solid #365575}.action:hover,.seg button:hover{filter:brightness(1.2)}input[type=range]{width:100%;accent-color:var(--cyan);margin:10px 0 3px;cursor:pointer}input[type=number]{width:100%;background:#091321;border:1px solid var(--line);color:var(--text);padding:9px;border-radius:9px;font:inherit}
+.formula{background:#091321;border:1px solid var(--line);padding:13px;border-radius:12px;margin-top:16px}.equation{font:600 19px Georgia,serif;text-align:center;margin:7px 0;color:#fff}.formula small{display:block;color:var(--muted);font-size:11px;text-align:center}
+.scene{padding:12px;overflow:hidden}.sceneTop{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 12px}.sceneTop h2{margin:0}.legend{display:flex;gap:13px;flex-wrap:wrap;color:var(--muted);font-size:11px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.canvasWrap{background:linear-gradient(180deg,#0a1728,#0b1422);border:1px solid var(--line);border-radius:13px;overflow:hidden}.canvasWrap svg{display:block;width:100%;height:auto;min-height:250px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}.metric{background:#0a1626;border:1px solid var(--line);padding:11px;border-radius:12px}.metric label{display:block;color:var(--muted);font-size:11px}.metric strong{font-size:17px;display:block;margin-top:3px;font-variant-numeric:tabular-nums}.status{display:flex;align-items:center;gap:9px;margin-top:12px;padding:12px 14px;border-radius:12px;background:#142b2a;border:1px solid #28634d}.status.bad{background:#2b1b2b;border-color:#6b3655}.status strong{font-size:14px}.status span{font-size:12px;color:var(--muted)}.bottom{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.imageDemo{display:flex;align-items:center;gap:16px}.sample{width:132px;height:100px;flex:0 0 132px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#182d43}.sample svg{width:100%;height:100%;filter:blur(var(--blur,0px));transition:filter .35s ease}.note{color:var(--muted);font-size:12px}.foot{color:var(--muted);font-size:12px;margin:18px 2px 0}.readout{font-size:13px;color:var(--muted);margin-top:8px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.bottom{grid-template-columns:1fr}.hero{align-items:start;flex-direction:column}.tag{white-space:normal}.scene{padding:9px}}
+@media(max-width:480px){main{padding:20px 11px 32px}.panel{padding:14px}.metrics{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:span 2}.imageDemo{align-items:flex-start}.sample{width:112px;flex-basis:112px}}
+</style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <div><div class="eyebrow">Interactive optics playground</div><h1>Focus Lab<span style="color:var(--cyan)">.</span></h1><p>Change the corrective lens and watch the rays travel through the eye. The model shows why a diverging lens can help a myopic eye focus on its retina.</p></div>
+    <div class="tag">PARAXIAL · THIN-LENS MODEL</div>
+  </header>
+  <div class="layout">
+    <section class="panel">
+      <h2>1 · Choose an eye</h2>
+      <div class="seg" role="group" aria-label="Eye type">
+        <button id="normalBtn" class="active" aria-pressed="true">Normal eye</button>
+        <button id="myopiaBtn" aria-pressed="false">Myopia eye</button>
+      </div>
+      <div class="control">
+        <div class="row"><label for="errorRange">Eye's refractive error</label><strong class="value" id="errorValue">0.0 D</strong></div>
+        <input id="errorRange" type="range" min="0" max="6" step=".25" value="0">
+        <div class="row muted"><span>0 D</span><span>+6 D excess eye power</span></div>
+        <div class="readout" id="eyeHint">Normal eye: distant parallel rays focus on the retina without glasses.</div>
+      </div>
+      <h2 style="margin-top:22px">2 · Change the glasses</h2>
+      <div class="control">
+        <div class="row"><label for="powerRange">Lens power (P)</label><strong class="value" id="powerValue">0.0 D</strong></div>
+        <input id="powerRange" type="range" min="-6" max="6" step=".25" value="0">
+        <div class="row muted"><span>−6 D concave</span><span>+6 D convex</span></div>
+      </div>
+      <div class="row" style="margin-top:13px"><label for="focalInput">Focal length (f)</label><strong class="value" id="focalValue">∞</strong></div>
+      <div class="muted">Move either slider; the other value updates using P = 1/f.</div>
+      <div class="formula">
+        <div class="equation">P = 1 / f</div>
+        <small>P in diopters (D), f in metres (m)</small>
+        <div class="equation" style="font-size:16px;margin-top:12px">P<sub>total</sub> = P<sub>eye</sub> + P<sub>glasses</sub></div>
+        <small>Reduced-eye approximation; lens-to-eye spacing is ignored</small>
+      </div>
+      <div class="control">
+        <button class="action" id="correctBtn" style="width:100%">Apply exact correction</button>
+        <div class="muted" style="margin-top:7px">Sets the glasses to the ideal power for the selected eye.</div>
+      </div>
+    </section>
+    <section class="panel scene">
+      <div class="sceneTop"><h2>3 · Watch the light</h2><div class="legend"><span><i class="dot" style="background:var(--yellow)"></i>Light rays</span><span><i class="dot" style="background:var(--pink)"></i>Focus</span><span><i class="dot" style="background:var(--cyan)"></i>Retina</span></div></div>
+      <div class="canvasWrap">
+        <svg id="optics" viewBox="0 0 780 390" role="img" aria-label="Animated light rays passing through a corrective lens and an eye">
+          <defs>
+            <linearGradient id="eyeFill" x1="0" x2="1"><stop stop-color="#294b68"/><stop offset="1" stop-color="#172b43"/></linearGradient>
+            <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <g opacity=".22" stroke="#6d8cac" stroke-width="1">
+            <path d="M0 65H780M0 130H780M0 195H780M0 260H780M0 325H780"/>
+          </g>
+          <text x="34" y="30" fill="#9eb0c9" font-size="12">DISTANT OBJECT · PARALLEL RAYS</text>
+          <g id="incoming" stroke="#ffd166" stroke-width="2" fill="none" opacity=".9">
+            <path d="M22 125H280"/><path d="M22 195H280"/><path d="M22 265H280"/>
+          </g>
+          <g id="lensGroup">
+            <path id="lensShape" d="M280 105 Q300 195 280 285 Q260 195 280 105Z" fill="#55d8ee" fill-opacity=".24" stroke="#55d8ee" stroke-width="2"/>
+            <path d="M280 80V310" stroke="#55d8ee" stroke-dasharray="3 6" opacity=".3"/>
+            <text x="280" y="340" text-anchor="middle" fill="#9eb0c9" font-size="12">GLASSES</text>
+          </g>
+          <g id="eyeGroup">
+            <path d="M445 195 C490 105 625 95 720 195 C625 295 490 285 445 195Z" fill="url(#eyeFill)" stroke="#7298ba" stroke-width="2"/>
+            <path d="M445 195 Q480 125 520 195 Q480 265 445 195Z" fill="#55d8ee" fill-opacity=".16" stroke="#55d8ee" stroke-width="2"/>
+            <ellipse cx="520" cy="195" rx="13" ry="43" fill="#92d8e7" fill-opacity=".28" stroke="#8bd9e8" stroke-width="2"/>
+            <ellipse cx="520" cy="195" rx="5" ry="18" fill="#071321"/>
+            <path d="M706 125 Q732 195 706 265" stroke="#55d8ee" stroke-width="7" fill="none"/>
+            <text x="585" y="325" text-anchor="middle" fill="#9eb0c9" font-size="12">EYE · RETINA</text>
+            <path d="M706 112V278" stroke="#55d8ee" stroke-dasharray="4 5" opacity=".5"/>
+          </g>
+          <g id="rays" fill="none" stroke="#ffd166" stroke-width="2.4" stroke-linecap="round" filter="url(#glow)">
+            <path id="ray0"/><path id="ray1"/><path id="ray2"/>
+          </g>
+          <g id="focusGroup"><circle id="focusDot" cx="700" cy="195" r="7" fill="#ff7eaa" stroke="#fff" stroke-width="1.5"/><text id="focusLabel" x="700" y="88" fill="#ff9cbd" text-anchor="middle" font-size="12">FOCUS</text></g>
+          <text x="706" y="292" fill="#55d8ee" text-anchor="middle" font-size="11">RETINA</text>
+          <g id="particles" fill="#fff2c2"><circle r="3"/><circle r="3"/><circle r="3"/></g>
+        </svg>
+      </div>
+      <div class="metrics">
+        <div class="metric"><label>Combined power</label><strong id="totalPower">60.0 D</strong></div>
+        <div class="metric"><label>Focus from eye lens</label><strong id="focusDistance">16.67 mm</strong></div>
+        <div class="metric"><label>Retina position</label><strong>16.67 mm</strong></div>
+      </div>
+      <div id="status" class="status"><div style="font-size:20px">●</div><div><strong id="statusTitle">Clear distance vision</strong><br><span id="statusText">The rays meet at the retina in this simplified model.</span></div></div>
+      <div class="readout" id="focusExplain">The focus marker sits on the retina.</div>
+    </section>
+  </div>
+  <div class="bottom">
+    <section class="panel">
+      <h2>4 · What would the object look like?</h2>
+      <div class="imageDemo">
+        <div class="sample" id="sample"><svg viewBox="0 0 132 100" aria-label="A simple landscape illustration"><rect width="132" height="100" fill="#9ed9e8"/><circle cx="101" cy="20" r="10" fill="#ffe18b"/><path d="M0 69L34 31 64 68 88 42 132 78V100H0Z" fill="#527e80"/><path d="M0 78Q38 58 68 78T132 74V100H0Z" fill="#356b58"/><path d="M22 80V51M13 61L22 42 31 61Z" stroke="#294d42" stroke-width="4" fill="#38785a"/><path d="M84 83V56M75 66L84 46 93 66Z" stroke="#294d42" stroke-width="4" fill="#38785a"/></svg></div>
+        <div><strong id="visionLabel">Sharp image</strong><p class="note" id="visionNote">Focus lands on the retina, so the model predicts a sharp image.</p></div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>What this simulation assumes</h2>
+      <p class="note">This is a teaching model, not an eye prescription calculator. It treats the eye as a thin lens with a fixed retina, assumes glasses sit directly against the eye's optical system, and uses paraxial rays. Real eyes have separated optical surfaces, accommodation, pupil size, aberrations and individual anatomy.</p>
+      <p class="note">A longer eyeball is one common cause of myopia, but the slider represents its optical effect as excess eye power—not literal eye growth.</p>
+    </section>
+  </div>
+  <p class="foot">Tip: choose “Myopia eye”, then press “Apply exact correction”. The glasses should become concave (negative power), and the focus should move back onto the retina.</p>
+</main>
+<script>
+(() => {
+ const $ = id => document.getElementById(id);
+ const eyeBase=60, retina=1/eyeBase;
+ let eyeError=0, lensPower=0, eyeMode='normal', start=performance.now();
+ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+ const fmt=(v,n=2)=>Number.isFinite(v)?v.toFixed(n):'∞';
+ function setMode(mode){
+   eyeMode=mode;
+   $('normalBtn').classList.toggle('active',mode==='normal');
+   $('myopiaBtn').classList.toggle('active',mode==='myopia');
+   $('normalBtn').setAttribute('aria-pressed',mode==='normal');
+   $('myopiaBtn').setAttribute('aria-pressed',mode==='myopia');
+   if(mode==='normal'){eyeError=0;$('errorRange').value=0;lensPower=0;$('powerRange').value=0;}
+   else {eyeError=2;$('errorRange').value=2;lensPower=0;$('powerRange').value=0;}
+   update();
+ }
+ $('normalBtn').addEventListener('click',()=>setMode('normal'));
+ $('myopiaBtn').addEventListener('click',()=>setMode('myopia'));
+ $('errorRange').addEventListener('input',e=>{eyeError=+e.target.value;eyeMode=eyeError===0?'normal':'myopia';$('normalBtn').classList.toggle('active',eyeMode==='normal');$('myopiaBtn').classList.toggle('active',eyeMode==='myopia');update();});
+ $('powerRange').addEventListener('input',e=>{lensPower=+e.target.value;update();});
+ $('correctBtn').addEventListener('click',()=>{lensPower=-eyeError;$('powerRange').value=lensPower;update();});
+ function update(){
+   const total=eyeBase+eyeError+lensPower;
+   const focus=total>0?1/total:Infinity;
+   const delta=Number.isFinite(focus)?focus-retina:Infinity;
+   const relative=Number.isFinite(delta)?Math.abs(delta)/retina:1;
+   const blur=clamp(relative*5.2,0,7);
+   $('errorValue').textContent=(eyeError?'+':'')+fmt(eyeError,2)+' D';
+   $('powerValue').textContent=(lensPower>0?'+':'')+fmt(lensPower,2)+' D';
+   $('focalValue').textContent=lensPower===0?'∞':fmt(1/lensPower,3)+' m';
+   $('totalPower').textContent=fmt(total,2)+' D';
+   $('focusDistance').textContent=Number.isFinite(focus)?fmt(focus*1000,2)+' mm':'∞';
+   $('eyeHint').textContent=eyeError===0?'Normal eye: distant parallel rays focus on the retina without glasses.':`Myopia model: the eye has +${fmt(eyeError,2)} D excess optical power, so uncorrected distant rays focus in front of the retina.`;
+   $('sample').style.setProperty('--blur',blur.toFixed(2)+'px');
+   const good=Number.isFinite(delta)&&Math.abs(delta)<0.00012;
+   $('status').classList.toggle('bad',!good);
+   $('statusTitle').textContent=good?'Clear distance vision':'Blurred distance vision';
+   $('statusText').textContent=good?'The rays meet very close to the retina.':'The focus falls '+(delta<0?'in front of':'behind')+' the retina.';
+   $('visionLabel').textContent=good?'Sharp image':'Blurred image';
+   $('visionNote').textContent=good?'Focus lands on the retina, so the model predicts a sharp image.':'The focus misses the retina, so the illustration becomes progressively blurred.';
+   $('focusExplain').textContent=good?'The focus marker sits on the retina.':Number.isFinite(focus)?`The focus is ${fmt(Math.abs(delta)*1000,2)} mm ${delta<0?'in front of':'behind'} the retinal plane.`:'The rays do not converge to a real focus in front of the eye.';
+   draw(focus,total);
+ }
+ function draw(focus,total){
+   // Diagram coordinates: corrective lens at x=280; eye's equivalent lens at x=520; retina at x=706.
+   const xLens=280,xEye=520,xRet=706, eyeDistance=.01667;
+   const y0=[-70,0,70];
+   const pathIds=['ray0','ray1','ray2'];
+   y0.forEach((y,i)=>{
+     // Scale paraxial ray height to 1.8 mm, lens power gives angular change.
+     const h=y/70*.0018;
+     const slopeAfterGlass=-lensPower*h;
+     const yAtEye=h+slopeAfterGlass*.24;
+     const eyePower=eyeBase+eyeError;
+     const slopeAfterEye=slopeAfterGlass-eyePower*yAtEye;
+     // Convert physical y to SVG pixels (1 mm = 38 px).
+     const pyLens=195+y;
+     const pyEye=195+yAtEye/.0018*70;
+     const xFocus=Number.isFinite(focus)?xEye+(focus/.01667)*(xRet-xEye):xRet+80;
+     const pyFocus=195;
+     let d=`M 22 ${pyLens} L ${xLens} ${pyLens} L ${xEye} ${pyEye}`;
+     if(Math.abs(slopeAfterEye)>1e-8 && Number.isFinite(focus)){
+       const yRet=yAtEye+slopeAfterEye*retina;
+       const pyRet=195+yRet/.0018*70;
+       d+=` L ${xRet} ${pyRet}`;
+       // Continue to show where it converges, scaled in diagram.
+       const xEnd=clamp(xEye+(focus/.01667)*(xRet-xEye),xEye+5,775);
+       const yEnd=195;
+       d+=` L ${xEnd} ${yEnd}`;
+     } else d+=` L 775 ${pyEye}`;
+     $(pathIds[i]).setAttribute('d',d);
+   });
+   // A virtual focus for a diverging incoming bundle is represented to the left of the eye.
+   let fx=Number.isFinite(focus)?xEye+(focus/retina)*(xRet-xEye):775;
+   fx=clamp(fx,290,775);
+   $('focusDot').setAttribute('cx',fx);
+   $('focusDot').setAttribute('cy',195);
+   $('focusLabel').setAttribute('x',fx);
+   $('focusLabel').textContent=Number.isFinite(focus)?(Math.abs(focus-retina)<.00012?'FOCUS ≈ RETINA':(focus<retina?'FOCUS BEFORE RETINA':'FOCUS BEHIND RETINA')):'NO REAL FOCUS';
+   const mag=clamp(Math.abs(lensPower),0,6);
+   const edge=mag*1.5;
+   const thick= lensPower<0 ? 8+edge : 8+edge;
+   let shape;
+   if(lensPower>0.05) shape=`M 280 105 Q ${280+thick} 195 280 285 Q ${280-thick} 195 280 105Z`;
+   else if(lensPower<-.05) shape=`M 280 105 Q ${280-edge} 195 280 285 Q ${280+edge} 195 280 105Z`;
+   else shape='M 280 105 Q 288 195 280 285 Q 272 195 280 105Z';
+   $('lensShape').setAttribute('d',shape);
+   $('lensShape').setAttribute('fill',lensPower<0?'#55d8ee':'#ffd166');
+   $('lensShape').setAttribute('stroke',lensPower<0?'#55d8ee':'#ffd166');
+ }
+ function animate(now){
+   const t=(now-start)/1000;
+   document.querySelectorAll('#rays path').forEach((p,i)=>{
+     const len=p.getTotalLength();
+     const phase=(t*95+i*48)%Math.max(len,1);
+     p.style.strokeDasharray='13 1000';
+     p.style.strokeDashoffset=String(-phase);
+   });
+   requestAnimationFrame(animate);
+ }
+ update();requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>'''
+
+path = Path("/mnt/data/focus_lab_myopia_simulator.html")
+path.write_text(html, encoding="utf-8")
+print(f"Created {path} ({path.stat().st_size:,} bytes)")
